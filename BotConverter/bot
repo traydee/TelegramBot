@@ -1,0 +1,71 @@
+import telebot
+import requests
+from bs4 import BeautifulSoup
+# import json
+
+bot = telebot.TeleBot('6253033612:AAFMt8R7ifDgBblvikYqO_GZ5Y58BKRw_7I')
+types = telebot.types
+
+@bot.message_handler(commands=["start"])
+def start(message):
+    kb = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(text="BYN/EUR", callback_data="byn/eur")
+    btn2 = types.InlineKeyboardButton(text="BYN/USD", callback_data="byn/usd")
+    btn3 = types.InlineKeyboardButton(text="BYN/PLN", callback_data="byn/pln")
+    kb.add(btn1, btn2, btn3)
+    bot.send_message(message.chat.id, "Выберите валюту:", reply_markup=kb)
+
+@bot.callback_query_handler(func=lambda callback: callback.data)
+def currency(callback):
+    if callback.data == "byn/eur":
+        bot.send_message(callback.message.chat.id, "Введите сумму в рублях")
+        @bot.message_handler(content_types=['text', ])
+        def byneur(message):
+            response = requests.get("https://myfin.by/currency/brest")
+            bs = BeautifulSoup(response.text, "lxml")
+            temp = bs.find('span', {"class": 'best accent'})
+            if not message.text.isdigit():
+                bot.send_message(callback.message.chat.id, "Введите число")
+                bot.register_next_step_handler(callback.message, callback=byneur)
+            else:
+                b = float(temp.text)
+                amount = int(message.text)
+                total = round((amount / b), 2)
+                result = f'{amount} BYN = {total} EUR'
+                bot.send_message(message.chat.id, result)
+
+    if callback.data == "byn/usd":
+        bot.send_message(callback.message.chat.id, "Введите сумму в рублях")
+        @bot.message_handler(content_types=['text', ])
+        def bynusd(message):
+            response = requests.get("https://myfin.by/currency/brest")
+            bs = BeautifulSoup(response.text, "lxml")
+            temp = bs.find('span', {"class": 'best accent'})
+            if not message.text.isdigit():
+                bot.send_message(callback.message.chat.id, "Введите число")
+                bot.register_next_step_handler(callback.message, callback=bynusd)
+            b = float(temp.text)
+            amount = int(message.text)
+            total = round((amount / b), 2)
+            result = f'{amount} BYN = {total} USD'
+            bot.send_message(message.chat.id, result)
+
+    if callback.data == "byn/pln":
+        bot.send_message(callback.message.chat.id, "Введите сумму в рублях")
+        @bot.message_handler(content_types=['text', ])
+        def bynpln(message):
+            response = requests.get("https://myfin.by/currency/brest")
+            bs = BeautifulSoup(response.text, "lxml")
+            temp = bs.find('span', {"class": 'best accent'})
+            if not message.text.isdigit():
+                bot.send_message(callback.message.chat.id, "Введите число")
+                bot.register_next_step_handler(callback.message, callback=bynpln)
+            else:
+                b = float(temp.text)
+                amount = int(message.text)
+                total = round((amount / b), 2)
+                result = f'{amount} BYN = {total} PLN'
+                bot.send_message(message.chat.id, result)
+
+
+bot.polling(none_stop=True)
